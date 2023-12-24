@@ -110,4 +110,3 @@ if __name__ == '__main__':
                 ex.show()
         pygame.display.flip()
     pygame.quit()
-    sys.exit(app.exec_())

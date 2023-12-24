@@ -1,4 +1,4 @@
-import asyncpg
+import psycopg2
 
 from config import *
 
@@ -7,23 +7,26 @@ class DB:
     def __init__(self):
         self.connection = None
 
-    async def connect(self):
-        self.connection = await asyncpg.connect(
+    def connect(self):
+        self.connection = psycopg2.connect(
             user=POSTGRES_USER,
             password=POSTGRES_PASSWORD,
             host=POSTGRES_HOST,
             port=POSTGRES_PORT,
-            database=POSTGRES_DB
+            dbname=POSTGRES_DB
+        )
+        self.connection.autocommit = True
+
+    def insert_new_record(self, name: str, points: int):
+        cursor = self.connection.cursor()
+        cursor.execute(
+            'INSERT INTO users (name, points) VALUES (%s, %s)', (name, points,)
         )
 
-    # SELECT ===========================================================================================================
-    async def insert_new_record(self, name: str, points: int):
-        await self.connection.execute(
-            'INSERT INTO users (name, points) VALUES ($1, $2)', name, points
-        )
-
-    async def get_top(self) -> list:
-        result = await self.connection.fetch(
+    def get_top(self) -> list[tuple]:
+        cursor = self.connection.cursor()
+        cursor.execute(
             'SELECT name, points FROM users ORDER BY points DESC LIMIT 10'
         )
-        return [dict(i) for i in result]
+        result = cursor.fetchall()
+        return result
