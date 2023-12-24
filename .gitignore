@@ -2,4 +2,5 @@ venv
 .idea
 __pycache__
 .env
-config.py
+.git
+test_*.py
