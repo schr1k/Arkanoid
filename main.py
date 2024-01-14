@@ -1,61 +1,132 @@
-import io
 import pygame
-from PyQt5.QtWidgets import QPushButton, QWidget, QLabel, QLineEdit, QApplication
-import sys
-from PyQt5 import uic
+import random
+pygame.init()
 
+# Установка размеров окна игры
+WIDTH = 800
+HEIGHT = 400
+window = pygame.display.set_mode((WIDTH, HEIGHT))
+pygame.display.set_caption("Арканоид")
 
-def draw(screen):
-    screen.fill((200, 200, 200))
-    font = pygame.font.Font(None, 50)
-    text_arcanoid = font.render("Арканоид", True, (255, 0, 0))
-    text_arcanoid_x = width // 2 - text_arcanoid.get_width() // 2
-    text_arcanoid_y = height // 3 - text_arcanoid.get_height() // 3
-    text_arcanoid_w = text_arcanoid.get_width()
-    text_arcanoid_h = text_arcanoid.get_height()
-    screen.blit(text_arcanoid, (text_arcanoid_x, text_arcanoid_y))
-    pygame.draw.rect(screen, (255, 0, 0), (text_arcanoid_x - 10, text_arcanoid_y - 10,
-                                           text_arcanoid_w + 20, text_arcanoid_h + 20), 1)
+# Цвета
+Black = (0, 0, 0)
+BLUE = (0, 0, 255)
+YELLOW = (255, 255, 0)
+RED = (255, 0, 0)
+brick_image = pygame.image.load("i2.jpg")
 
-    font1 = pygame.font.Font(None, 50)
-    text_press = font.render("Нажмите на любую кнопку для продолжения", True, (255, 0, 0))
-    text_press_x = width // 2 - text_press.get_width() // 2
-    text_press_y = height // 6 * 3 - text_press.get_height() // 6 * 3
-    text_press_w = text_press.get_width()
-    text_press_h = text_press.get_height()
-    screen.blit(text_press, (text_press_x, text_press_y))
-    pygame.draw.rect(screen, (255, 0, 0), (text_press_x - 10, text_press_y - 10,
-                                           text_press_w + 20, text_press_h + 20), 1)
-
-
-class NickName(QWidget):
+# Класс для создания платформы игрока
+class Player(pygame.sprite.Sprite):
     def __init__(self):
         super().__init__()
-        uic.loadUi('nickname_input.ui', self)
-        self.setWindowTitle('Арканоид')
-        self.pushButton.clicked.connect(self.load_nickname_in_db)
+        self.width = 100
+        self.height = 10
+        self.image = pygame.Surface((self.width, self.height))
+        self.image.fill(BLUE)
+        self.rect = self.image.get_rect()
+        self.rect.x = (WIDTH - self.width) // 2
+        self.rect.y = HEIGHT - self.height - 10
+        self.speed = 5
 
-    def load_nickname_in_db(self):
-        self.nickname = self.lineEdit.text()
-        print(self.nickname)
-        self.close()
+    def update(self):
+        # Движение платформы влево и вправо при нажатии клавиш
+        keys = pygame.key.get_pressed()
+        if keys[pygame.K_LEFT]:
+            self.rect.x -= self.speed
+        if keys[pygame.K_RIGHT]:
+            self.rect.x += self.speed
 
+        # Ограничение движения платформы по границам окна
+        if self.rect.x < 0:
+            self.rect.x = 0
+        if self.rect.right > WIDTH:
+            self.rect.right = WIDTH
 
-if __name__ == '__main__':
-    pygame.init()
-    pygame.display.set_caption('Арканоид')
-    app = QApplication(sys.argv)
-    size = width, height = 800, 400
-    screen = pygame.display.set_mode(size)
-    draw(screen)
+# Класс для создания шарика
+class Ball(pygame.sprite.Sprite):
+    def __init__(self):
+        super().__init__()
+        self.image = pygame.Surface((10, 10))
+        self.image.fill(YELLOW)
+        self.rect = self.image.get_rect()
+        self.rect.x = WIDTH // 2
+        self.rect.y = HEIGHT // 2
+        self.speed_x = random.choice([-3, 3])
+        self.speed_y = -3
 
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.KEYDOWN:
-                ex = NickName()
-                ex.show()
-        pygame.display.flip()
-    pygame.quit()
+    def update(self):
+        # Движение шарика
+        self.rect.x += self.speed_x
+        self.rect.y += self.speed_y
+
+        # Отскок от стенок окна
+        if self.rect.left <= 0 or self.rect.right >= WIDTH:
+            self.speed_x *= -1
+        if self.rect.top <= 0:
+            self.speed_y *= -1
+
+        # Проверка на столкновение с платформой игрока
+        if pygame.sprite.collide_rect(self, player):
+            self.speed_y *= -1
+
+        # Проверка на столкновение с кирпичиками
+        brick_hit = pygame.sprite.spritecollide(self, bricks_group, True)
+        if brick_hit:
+            self.speed_y *= -1
+
+# Класс для создания кирпичиков
+class Brick(pygame.sprite.Sprite):
+    def __init__(self, x, y):
+        super().__init__()
+        self.image = pygame.transform.scale(brick_image, (70, 20))
+        self.rect = self.image.get_rect()
+        self.rect.x = x
+        self.rect.y = y
+
+# Группы спрайтов
+all_sprites = pygame.sprite.Group()
+bricks_group = pygame.sprite.Group()
+
+# Создание платформы игрока
+player = Player()
+all_sprites.add(player)
+
+# Создание шарика
+ball = Ball()
+all_sprites.add(ball)
+
+# Создание кирпичиков
+for row in range(4):
+    for col in range(10):
+        brick = Brick(1 + col * 80, 25 + row * 25)
+        all_sprites.add(brick)
+        bricks_group.add(brick)
+
+# Основной игровой цикл
+running = True
+clock = pygame.time.Clock()
+while running:
+    # Ограничение FPS
+    clock.tick(60)
+
+    # Обработка событий
+    for event in pygame.event.get():
+        if event.type == pygame.QUIT:
+            running = False
+
+    # Обновление спрайтов
+    all_sprites.update()
+
+    # Отрисовка спрайтов и фона
+    window.fill(Black)
+    all_sprites.draw(window)
+
+    # Проверка окончания игры
+    if ball.rect.bottom >= HEIGHT:
+        # Перезапуск игры
+        ball = Ball()
+        all_sprites.add(ball)
+
+    pygame.display.flip()
+
+pygame.quit()
