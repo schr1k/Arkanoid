@@ -1,5 +1,7 @@
-import pygame
 import random
+
+import pygame
+
 pygame.init()
 
 # Установка размеров окна игры
@@ -13,7 +15,10 @@ Black = (0, 0, 0)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
+
 brick_image = pygame.image.load("i2.jpg")
+speed = 5
+
 
 # Класс для создания платформы игрока
 class Player(pygame.sprite.Sprite):
@@ -26,21 +31,25 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = (WIDTH - self.width) // 2
         self.rect.y = HEIGHT - self.height - 10
-        self.speed = 5
+        self.speed = speed
+        self.direction = 1
 
     def update(self):
         # Движение платформы влево и вправо при нажатии клавиш
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             self.rect.x -= self.speed
+            self.direction = -1
         if keys[pygame.K_RIGHT]:
             self.rect.x += self.speed
+            self.direction = 1
 
         # Ограничение движения платформы по границам окна
         if self.rect.x < 0:
             self.rect.x = 0
         if self.rect.right > WIDTH:
             self.rect.right = WIDTH
+
 
 # Класс для создания шарика
 class Ball(pygame.sprite.Sprite):
@@ -50,9 +59,11 @@ class Ball(pygame.sprite.Sprite):
         self.image.fill(YELLOW)
         self.rect = self.image.get_rect()
         self.rect.x = WIDTH // 2
-        self.rect.y = HEIGHT // 2
-        self.speed_x = random.choice([-3, 3])
+        self.rect.y = 370
+        self.direction = random.choice([-1, 1])
+        self.speed_x = 3 * self.direction
         self.speed_y = -3
+        self.running = True
 
     def update(self):
         # Движение шарика
@@ -62,17 +73,24 @@ class Ball(pygame.sprite.Sprite):
         # Отскок от стенок окна
         if self.rect.left <= 0 or self.rect.right >= WIDTH:
             self.speed_x *= -1
+            self.direction *= -1
         if self.rect.top <= 0:
             self.speed_y *= -1
 
         # Проверка на столкновение с платформой игрока
         if pygame.sprite.collide_rect(self, player):
             self.speed_y *= -1
+            if player.direction != ball.direction:
+                self.speed_x *= -1
+                self.direction *= -1
 
         # Проверка на столкновение с кирпичиками
         brick_hit = pygame.sprite.spritecollide(self, bricks_group, True)
         if brick_hit:
             self.speed_y *= -1
+            if len(bricks_group.sprites()) == 0:
+                self.running = False
+
 
 # Класс для создания кирпичиков
 class Brick(pygame.sprite.Sprite):
@@ -82,6 +100,7 @@ class Brick(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+
 
 # Группы спрайтов
 all_sprites = pygame.sprite.Group()
@@ -106,6 +125,7 @@ for row in range(4):
 running = True
 clock = pygame.time.Clock()
 while running:
+    running = ball.running
     # Ограничение FPS
     clock.tick(60)
 
@@ -125,6 +145,7 @@ while running:
     if ball.rect.bottom >= HEIGHT:
         # Перезапуск игры
         ball = Ball()
+        ball.rect.x = player.rect.x + player.width / 2
         all_sprites.add(ball)
 
     pygame.display.flip()
