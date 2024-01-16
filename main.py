@@ -1,5 +1,6 @@
 import pygame
 import random
+
 pygame.init()
 
 # Установка размеров окна игры
@@ -10,10 +11,12 @@ pygame.display.set_caption("Арканоид")
 
 # Цвета
 Black = (0, 0, 0)
+WHITE = (255, 255, 255)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
 brick_image = pygame.image.load("i2.jpg")
+
 
 # Класс для создания платформы игрока
 class Player(pygame.sprite.Sprite):
@@ -41,6 +44,7 @@ class Player(pygame.sprite.Sprite):
             self.rect.x = 0
         if self.rect.right > WIDTH:
             self.rect.right = WIDTH
+
 
 # Класс для создания шарика
 class Ball(pygame.sprite.Sprite):
@@ -74,6 +78,23 @@ class Ball(pygame.sprite.Sprite):
         if brick_hit:
             self.speed_y *= -1
 
+        if self.rect.bottom > HEIGHT:
+            game_over()
+
+    # Функция для отображения "GAME OVER" и завершения игры
+
+
+def game_over():
+    window.fill(Black)
+    font = pygame.font.Font(None, 60)
+    text = font.render("GAME OVER", True, WHITE)
+    text_rect = text.get_rect(center=(WIDTH // 2, HEIGHT // 2))
+    window.blit(text, text_rect)
+    pygame.display.flip()
+    pygame.time.wait(2000)
+    pygame.quit()
+
+
 # Класс для создания кирпичиков
 class Brick(pygame.sprite.Sprite):
     def __init__(self, x, y):
@@ -82,6 +103,7 @@ class Brick(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
+
 
 # Группы спрайтов
 all_sprites = pygame.sprite.Group()
