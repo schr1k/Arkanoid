@@ -143,10 +143,7 @@ while running:
 
     # Проверка окончания игры
     if ball.rect.bottom >= HEIGHT:
-        # Перезапуск игры
-        ball = Ball()
-        ball.rect.x = player.rect.x + player.width / 2
-        all_sprites.add(ball)
+        running = False
 
     pygame.display.flip()
 
