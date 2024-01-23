@@ -1,5 +1,6 @@
 import pygame
 import random
+
 pygame.init()
 
 # Установка размеров окна игры
@@ -10,10 +11,14 @@ pygame.display.set_caption("Арканоид")
 
 # Цвета
 Black = (0, 0, 0)
+WHITE = (255, 255, 255)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
+
 brick_image = pygame.image.load("i2.jpg")
+speed = 5
+
 
 # Класс для создания платформы игрока
 class Player(pygame.sprite.Sprite):
@@ -26,7 +31,8 @@ class Player(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = (WIDTH - self.width) // 2
         self.rect.y = HEIGHT - self.height - 10
-        self.speed = 5
+        self.speed = speed
+        self.direction = 1
 
     def update(self):
         # Движение платформы влево и вправо при нажатии клавиш
@@ -50,9 +56,11 @@ class Ball(pygame.sprite.Sprite):
         self.image.fill(YELLOW)
         self.rect = self.image.get_rect()
         self.rect.x = WIDTH // 2
-        self.rect.y = HEIGHT // 2
-        self.speed_x = random.choice([-3, 3])
+        self.rect.y = 370
+        self.direction = random.choice([-1, 1])
+        self.speed_x = 3 * self.direction
         self.speed_y = -3
+        self.running = True
 
     def update(self):
         # Движение шарика
@@ -62,17 +70,24 @@ class Ball(pygame.sprite.Sprite):
         # Отскок от стенок окна
         if self.rect.left <= 0 or self.rect.right >= WIDTH:
             self.speed_x *= -1
+            self.direction *= -1
         if self.rect.top <= 0:
             self.speed_y *= -1
 
         # Проверка на столкновение с платформой игрока
         if pygame.sprite.collide_rect(self, player):
             self.speed_y *= -1
+            if player.direction != ball.direction:
+                self.speed_x *= -1
+                self.direction *= -1
 
         # Проверка на столкновение с кирпичиками
         brick_hit = pygame.sprite.spritecollide(self, bricks_group, True)
         if brick_hit:
             self.speed_y *= -1
+            if len(bricks_group.sprites()) == 0:
+                self.running = False
+
 
 # Класс для создания кирпичиков
 class Brick(pygame.sprite.Sprite):
@@ -106,6 +121,7 @@ for row in range(4):
 running = True
 clock = pygame.time.Clock()
 while running:
+    running = ball.running
     # Ограничение FPS
     clock.tick(60)
 
@@ -123,9 +139,7 @@ while running:
 
     # Проверка окончания игры
     if ball.rect.bottom >= HEIGHT:
-        # Перезапуск игры
-        ball = Ball()
-        all_sprites.add(ball)
+        running = False
 
     pygame.display.flip()
 
