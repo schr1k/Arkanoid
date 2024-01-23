@@ -1,5 +1,6 @@
-import pygame
 import random
+
+import pygame
 
 pygame.init()
 
@@ -39,14 +40,17 @@ class Player(pygame.sprite.Sprite):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             self.rect.x -= self.speed
+            self.direction = -1
         if keys[pygame.K_RIGHT]:
             self.rect.x += self.speed
+            self.direction = 1
 
         # Ограничение движения платформы по границам окна
         if self.rect.x < 0:
             self.rect.x = 0
         if self.rect.right > WIDTH:
             self.rect.right = WIDTH
+
 
 # Класс для создания шарика
 class Ball(pygame.sprite.Sprite):
@@ -98,6 +102,7 @@ class Brick(pygame.sprite.Sprite):
         self.rect.x = x
         self.rect.y = y
 
+
 # Группы спрайтов
 all_sprites = pygame.sprite.Group()
 bricks_group = pygame.sprite.Group()
@@ -120,6 +125,7 @@ for row in range(4):
 # Основной игровой цикл
 running = True
 clock = pygame.time.Clock()
+
 while running:
     running = ball.running
     # Ограничение FPS
@@ -136,7 +142,6 @@ while running:
     # Отрисовка спрайтов и фона
     window.fill(Black)
     all_sprites.draw(window)
-
     # Проверка окончания игры
     if ball.rect.bottom >= HEIGHT:
         running = False
