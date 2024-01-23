@@ -1,6 +1,5 @@
-import random
-
 import pygame
+import random
 
 pygame.init()
 
@@ -12,6 +11,7 @@ pygame.display.set_caption("Арканоид")
 
 # Цвета
 Black = (0, 0, 0)
+WHITE = (255, 255, 255)
 BLUE = (0, 0, 255)
 YELLOW = (255, 255, 0)
 RED = (255, 0, 0)
@@ -39,17 +39,14 @@ class Player(pygame.sprite.Sprite):
         keys = pygame.key.get_pressed()
         if keys[pygame.K_LEFT]:
             self.rect.x -= self.speed
-            self.direction = -1
         if keys[pygame.K_RIGHT]:
             self.rect.x += self.speed
-            self.direction = 1
 
         # Ограничение движения платформы по границам окна
         if self.rect.x < 0:
             self.rect.x = 0
         if self.rect.right > WIDTH:
             self.rect.right = WIDTH
-
 
 # Класс для создания шарика
 class Ball(pygame.sprite.Sprite):
@@ -100,7 +97,6 @@ class Brick(pygame.sprite.Sprite):
         self.rect = self.image.get_rect()
         self.rect.x = x
         self.rect.y = y
-
 
 # Группы спрайтов
 all_sprites = pygame.sprite.Group()
